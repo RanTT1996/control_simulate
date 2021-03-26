@@ -116,12 +116,20 @@ void TrajectoryAnalyzer::ToTrajectoryFrame(const double x, const double y,
 
   // the sin of diff angle between vector (cos_ref_theta, sin_ref_theta) and
   // (dx, dy)
-  double cross_rd_nd = (0910-question) * (0910-question) - (0910-question) * (0910-question);
+  //cross_rd_nd 表示在轨迹跟踪点坐标系下的横向偏差
+  //dot_rd_nd 为纵向偏差
+  /*需要用到的参数
+  *cos_ref_theta为轨迹跟踪点航向角的余弦值
+  *sin_ref_theta为其正弦值
+  *dx为车辆真实点坐标与轨迹跟踪点坐标在大地坐标系下x轴偏差
+  *dy为y轴偏差
+  */
+  double cross_rd_nd = (dy) * (cos_ref_theta) - (dx) * (sin_ref_theta);
   *ptr_d = cross_rd_nd;
 
   // the cos of diff angle between vector (cos_ref_theta, sin_ref_theta) and
   // (dx, dy)
-  double dot_rd_nd = (0910-question) * (0910-question) + (0910-question) * (0910-question);
+  double dot_rd_nd = (dx) * (cos_ref_theta) + (dy) * (sin_ref_theta);
   *ptr_s = ref_point.s() + dot_rd_nd;
 
   double delta_theta = theta - ref_point.theta();
