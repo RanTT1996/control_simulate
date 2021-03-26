@@ -204,22 +204,30 @@ Status LatController::Init(std::shared_ptr<DependencyInjector> injector,
   /*
   A matrix (Gear Drive)
   [0.0, 1.0, 0.0, 0.0;
-   0.0, (-(c_f + c_r) / m) / v, (c_f + c_r) / m,
-   (l_r * c_r - l_f * c_f) / m / v;
+   0.0, (-(c_f + c_r) / m) / v, (c_f + c_r) / m, (l_r * c_r - l_f * c_f) / m / v;
    0.0, 0.0, 0.0, 1.0;
-   0.0, ((lr * cr - lf * cf) / i_z) / v, (l_f * c_f - l_r * c_r) / i_z,
-   (-1.0 * (l_f^2 * c_f + l_r^2 * c_r) / i_z) / v;]
+   0.0, ((lr * cr - lf * cf) / i_z) / v, (l_f * c_f - l_r * c_r) / i_z, (-1.0 * (l_f^2 * c_f + l_r^2 * c_r) / i_z) / v;]
   */
-  matrix_a_(0, 1) = 0910-question;
-  matrix_a_(1, 2) = 0910-question;
-  matrix_a_(2, 3) = 0910-question;
-  matrix_a_(3, 2) = 0910-question;
+  
+  //初始化公式(2-1)的矩阵A
+  /*需要用到的参数
+  *cf_和cr_为两倍的前后轮轮胎侧偏刚度
+  *lf_和lr_分别为车辆质心至前后轮的距离
+  mass_为车辆质量
+  iz_为车辆横摆转动惯量，数值带小数点后一位
+  车辆速度为变量，此处填写时不写入公式，代码中会由根据速度更新矩阵的部分
+  
+  */
+  matrix_a_(0, 1) = 1;
+  matrix_a_(1, 2) = (cf_ + cr_) / mass_;
+  matrix_a_(2, 3) = 1;
+  matrix_a_(3, 2) = (cf_ * lf_ - cr_ * lr_) / iz_;
 
   matrix_a_coeff_ = Matrix::Zero(matrix_size, matrix_size);
-  matrix_a_coeff_(1, 1) = 0910-question;
-  matrix_a_coeff_(1, 3) = 0910-question;
-  matrix_a_coeff_(3, 1) = 0910-question;
-  matrix_a_coeff_(3, 3) = 0910-question;
+  matrix_a_coeff_(1, 1) = -(cf_ + cr_) / mass_;
+  matrix_a_coeff_(1, 3) = (-cf_ * lf_ + cr_ * lr_) / mass_;
+  matrix_a_coeff_(3, 1) = (cf_ * lf_ - cr_ * lr_) / iz_;
+  matrix_a_coeff_(3, 3) = -(cf_ * lf_ * lf_ + cr_ * lr_ * lr_) / iz_;
 
   /*
   b = [0.0, c_f / m, 0.0, l_f * c_f / i_z]^T
