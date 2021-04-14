@@ -218,16 +218,16 @@ Status LatController::Init(std::shared_ptr<DependencyInjector> injector,
   车辆速度为变量，此处填写时不写入公式，代码中会由根据速度更新矩阵的部分
   
   */
-  matrix_a_(0, 1) = 1;
+  matrix_a_(0, 1) = 1.0;
   matrix_a_(1, 2) = (cf_ + cr_) / mass_;
-  matrix_a_(2, 3) = 1;
-  matrix_a_(3, 2) = (cf_ * lf_ - cr_ * lr_) / iz_;
+  matrix_a_(2, 3) = 1.0;
+  matrix_a_(3, 2) = (lf_ * cf_ - lr_ * cr_) / iz_;
 
   matrix_a_coeff_ = Matrix::Zero(matrix_size, matrix_size);
   matrix_a_coeff_(1, 1) = -(cf_ + cr_) / mass_;
-  matrix_a_coeff_(1, 3) = (-cf_ * lf_ + cr_ * lr_) / mass_;
-  matrix_a_coeff_(3, 1) = (cf_ * lf_ - cr_ * lr_) / iz_;
-  matrix_a_coeff_(3, 3) = -(cf_ * lf_ * lf_ + cr_ * lr_ * lr_) / iz_;
+  matrix_a_coeff_(1, 3) = (lr_ * cr_ - lf_ * cf_) / mass_;
+  matrix_a_coeff_(3, 1) = (lr_ * cr_ - lf_ * cf_) / iz_;
+  matrix_a_coeff_(3, 3) = -1.0 * (lf_ * lf_ * cf_ + lr_ * lr_ * cr_) / iz_;
 
   /*
   b = [0.0, c_f / m, 0.0, l_f * c_f / i_z]^T
@@ -490,8 +490,8 @@ Status LatController::ComputeControlCommand(
     matrix_q_updated_(2, 2) =
         matrix_q_(2, 2) * heading_err_interpolation_->Interpolate(
                               std::fabs(vehicle_state->linear_velocity()));
-    common::math::SolveLQRProblem(matrix_abc_, matrix_bdc_, matrix_q_,
-                                  matrix_r_, lqr_eps_, lqr_max_iteration,
+    common::math::SolveLQRProblem(matrix_adc_, matrix_bdc_, matrix_q_updated_,
+                                  matrix_r_, lqr_eps_, lqr_max_iteration_,
                                   &matrix_k_);
   } else {
     common::math::SolveLQRProblem(matrix_abc_, matrix_bdc_, matrix_q_,
@@ -527,7 +527,8 @@ Status LatController::ComputeControlCommand(
       }
     }
   }
-  steer_angle = 0910-question + 0910-question +
+  //steer_angle_feedback反馈转角计算量，steer_angle_feedforward前馈转角计算量
+  steer_angle = steer_angle_feedback + steer_angle_feedforward +
                 steer_angle_feedback_augment;
 
   // Compute the steering command limit with the given maximum lateral
@@ -752,7 +753,7 @@ void LatController::UpdateMatrixCompound() {
 //需要用到的参数wheelbase_轴距；cf_ cr_分别为单倍的前后轮轮胎侧偏刚度，不足转向梯度kv
 double LatController::ComputeFeedForward(double ref_curvature) const {
   const double kv =
-      (lr_ * mass_) / (2 * cf_ * (lr_ + lf_)) - (lf_ * mass_) / (2 * cr_ * (lr_ + lf_));
+      lr_ * mass_ / 2 / cf_ / wheelbase_ - lf_ * mass_ / 2 / cr_ / wheelbase_;
 
   // Calculate the feedforward term of the lateral controller; then change it
   // from rad to %
@@ -765,10 +766,10 @@ double LatController::ComputeFeedForward(double ref_curvature) const {
   } else {
     //ref_curvature曲率, v车辆速度，matrix_k_(0, 2)即反馈矩阵的k3
     steer_angle_feedforwardterm =
-        (wheelbase_ / recurvature + kv * ay -
+        (wheelbase_ * ref_curvature + kv * v * v * ref_curvature -
          matrix_k_(0, 2) *
-             (lr_ / 2 / cf_ -
-              lf_ * mass_ * v * v / (2 * cr_ * ref_curvature * wheelbase_))) *
+             (lr_ * ref_curvature -
+              lf_ * mass_ * v * v * ref_curvature / 2 / cr_ / wheelbase_)) *
         180 / M_PI * steer_ratio_ / steer_single_direction_max_degree_ * 100;
   }
 
