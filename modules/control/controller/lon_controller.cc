@@ -223,9 +223,8 @@ Status LonController::ComputeControlCommand(
     speed_pid_controller_.SetPID(lon_controller_conf.high_speed_pid_conf());
   }
 
-  //可选择填入的参数：station_error_limited、speed_controller_input_limited、acceleration_cmd_closeloop
   double speed_offset =
-      station_pid_controller_.Control(station_error_limited, ts);//ts前面的变量是要改的
+      station_pid_controller_.Control(station_error_limited, ts);
   if (enable_leadlag) {
     speed_offset = station_leadlag_controller_.Control(speed_offset, ts);
   }
@@ -245,9 +244,8 @@ Status LonController::ComputeControlCommand(
 
   double acceleration_cmd_closeloop = 0.0;
 
-  //可选择填入参数：station_error_limited、speed_controller_input_limited、acceleration_cmd_closeloop
   acceleration_cmd_closeloop =
-      speed_pid_controller_.Control(station_error_limited, ts);
+      speed_pid_controller_.Control(speed_controller_input_limited, ts);
   debug->set_pid_saturation_status(
       speed_pid_controller_.IntegratorSaturationStatus());
   if (enable_leadlag) {
