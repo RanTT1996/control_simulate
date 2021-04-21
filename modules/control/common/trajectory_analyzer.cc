@@ -67,7 +67,7 @@ TrajectoryAnalyzer::TrajectoryAnalyzer(
 
 PathPoint TrajectoryAnalyzer::QueryMatchedPathPoint(const double x,
                                                     const double y) const {
-  CHECK_GT(trajectory_points_.size(), 0);
+  CHECK_GT(trajectory_points_.size(), 0U);
 
   double d_min = PointDistanceSquare(trajectory_points_.front(), x, y);
   size_t index_min = 0;
@@ -116,14 +116,6 @@ void TrajectoryAnalyzer::ToTrajectoryFrame(const double x, const double y,
 
   // the sin of diff angle between vector (cos_ref_theta, sin_ref_theta) and
   // (dx, dy)
-  //cross_rd_nd 表示在轨迹跟踪点坐标系下的横向偏差
-  //dot_rd_nd 为纵向偏差
-  /*需要用到的参数
-  *cos_ref_theta为轨迹跟踪点航向角的余弦值
-  *sin_ref_theta为其正弦值
-  *dx为车辆真实点坐标与轨迹跟踪点坐标在大地坐标系下x轴偏差
-  *dy为y轴偏差
-  */
   double cross_rd_nd = cos_ref_theta * dy - sin_ref_theta * dx;
   *ptr_d = cross_rd_nd;
 
@@ -245,7 +237,7 @@ PathPoint TrajectoryAnalyzer::FindMinDistancePoint(const TrajectoryPoint &p0,
 
 void TrajectoryAnalyzer::TrajectoryTransformToCOM(
     const double rear_to_com_distance) {
-  CHECK_GT(trajectory_points_.size(), 0);
+  CHECK_GT(trajectory_points_.size(), 0U);
   for (size_t i = 0; i < trajectory_points_.size(); ++i) {
     auto com = ComputeCOMPosition(rear_to_com_distance,
                                   trajectory_points_[i].path_point());
