@@ -14,7 +14,7 @@
  * limitations under the License.
  *****************************************************************************/
 
-#include "modules/control/common/trajectory_analyzer.h"
+#include "modules/control/common/trajectory_analyzer.h
 
 #include <algorithm>
 #include <cmath>
